@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { sounds } from '../lib/sounds';
@@ -8,7 +8,7 @@ interface LevelUpScreenProps {
 }
 
 export default function LevelUpScreen({ onContinue }: LevelUpScreenProps) {
-  const firedRef = useRef(false);
+  const [showButton, setShowButton] = useState(false);
 
   const particles = useMemo(
     () =>
@@ -24,8 +24,6 @@ export default function LevelUpScreen({ onContinue }: LevelUpScreenProps) {
   );
 
   useEffect(() => {
-    if (firedRef.current) return;
-    firedRef.current = true;
     sounds.levelUp();
 
     const fire = () => {
@@ -41,16 +39,15 @@ export default function LevelUpScreen({ onContinue }: LevelUpScreenProps) {
     const t1 = setTimeout(fire, 600);
     const t2 = setTimeout(fire, 1200);
     const t3 = setTimeout(fire, 1800);
-
-    const continueTimer = setTimeout(onContinue, 5000);
+    const t4 = setTimeout(() => setShowButton(true), 1000);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      clearTimeout(continueTimer);
+      clearTimeout(t4);
     };
-  }, [onContinue]);
+  }, []);
 
   return (
     <motion.div
@@ -112,6 +109,18 @@ export default function LevelUpScreen({ onContinue }: LevelUpScreenProps) {
             Welcome to Level 22.
           </p>
         </motion.div>
+
+        {showButton && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            onClick={onContinue}
+            className="mt-10 px-8 py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-full transition-colors"
+          >
+            Continue
+          </motion.button>
+        )}
       </motion.div>
     </motion.div>
   );

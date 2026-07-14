@@ -19,18 +19,18 @@ export default function UpdateScreen({ onComplete }: UpdateScreenProps) {
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [showComplete, setShowComplete] = useState(false);
   const startedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
     sounds.startup();
 
-    let cancelled = false;
     let currentProgress = 0;
 
     const run = async () => {
       for (let i = 0; i < PROGRESS_STEPS.length; i++) {
-        if (cancelled) return;
         const step = PROGRESS_STEPS[i];
         setStepIndex(i);
 
@@ -41,7 +41,6 @@ export default function UpdateScreen({ onComplete }: UpdateScreenProps) {
           sounds.error();
           setCurrentMessage(step.message);
           await wait(2200);
-          if (cancelled) return;
           setIsError(false);
         } else {
           setCurrentMessage(step.message);
@@ -49,35 +48,22 @@ export default function UpdateScreen({ onComplete }: UpdateScreenProps) {
 
         const target = step.target;
         while (currentProgress < target) {
-          if (cancelled) return;
-          const increment = Math.random() * 2.5 + 0.5;
-          currentProgress = Math.min(target, currentProgress + increment);
+          const remaining = target - currentProgress;
+          const increment = Math.min(5, remaining);
+          currentProgress += increment;
           setProgress(currentProgress);
-          await wait(40 + Math.random() * 80);
-        }
-
-        if (i < PROGRESS_STEPS.length - 1) {
-          const pauseChance = Math.random();
-          if (pauseChance > 0.6) {
-            await wait(600 + Math.random() * 800);
-          }
+          await wait(3000 + Math.random() * 2000);
         }
       }
 
-      if (cancelled) return;
       sounds.complete();
       setShowComplete(true);
       await wait(2000);
-      if (cancelled) return;
-      onComplete();
+      onCompleteRef.current();
     };
 
     run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [onComplete]);
+  }, []);
 
   return (
     <motion.div
